@@ -1,5 +1,5 @@
 {
-  "name": "contenttype",
+  "name": "@shinymayhem/contenttype",
   "version": "2.0.0",
   "description": "Javascript/ECMAScript library for parsing Content-Type and Media/MIME type strings",
   "main": "contenttype.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/Acubed/contenttype.git"
+    "url": "git://github.com/shinymayhem/contenttype.git"
   },
   "keywords": [
     "content-type",
