@@ -73,6 +73,48 @@ describe('comparison', function tests() {
     var r = MediaType.mediaCmp(p, q);
     expect(r).to.equal(null);
   });
+
+  it('should recognize wildcard parameter as subset of value where param is set', function test() {
+    var p = new MediaType('text/plain;s=*');
+    var q = new MediaType('text/plain;s=1');
+    var r = MediaType.mediaCmp(p, q);
+    expect(r).to.equal(1);
+  });
+
+  it('should recognize wildcard in different parameters as equal', function test() {
+    var p = new MediaType('text/plain;s=*;p=3');
+    var q = new MediaType('text/plain;s=1;p=*');
+    var r = MediaType.mediaCmp(p, q);
+    expect(r).to.equal(0);
+  });
+
+  it('should recognize wildcard as substring in parameter comparison', function test() {
+    var p = new MediaType('text/plain;s=1.*');
+    var q = new MediaType('text/plain;s=1.2');
+    var r = MediaType.mediaCmp(p, q);
+    expect(r).to.equal(1);
+  });
+
+  it('should recognize wildcard in substring as equal when other params are more specific', function test() {
+    var p = new MediaType('text/plain;s=1.2');
+    var q = new MediaType('text/plain;s=1.*;p=2.1');
+    var r = MediaType.mediaCmp(p, q);
+    expect(r).to.equal(1);
+  });
+
+  it('should recognize wildcard in substring of different parameters as equal', function test() {
+    var p = new MediaType('text/plain;s=1.*;p=2.1');
+    var q = new MediaType('text/plain;s=1.2;p=2.*');
+    var r = MediaType.mediaCmp(p, q);
+    expect(r).to.equal(0);
+  });
+
+  it('should recognize different wildcard locations in the same parameter', function test() {
+    var p = new MediaType('text/plain;s=1.*');
+    var q = new MediaType('text/plain;s=1.2.*');
+    var r = MediaType.mediaCmp(p, q);
+    expect(r).to.equal(1);
+  });
 });
 
 describe('specificity', function tests() {
@@ -102,6 +144,34 @@ describe('specificity', function tests() {
     var b = new MediaType('text/html');
     var p = MediaType.specificityCmp(a, b);
     p.should.eql(-1);
+  });
+
+  it('should evaluate wildcard params as more specific than no param', function test() {
+    var a = new MediaType('text/html');
+    var b = new MediaType('text/html;p=*');
+    var p = MediaType.specificityCmp(a, b);
+    p.should.eql(1);
+  });
+
+  it('should evaluate different wildcard params as equally specific', function test() {
+    var a = new MediaType('text/html;p=*');
+    var b = new MediaType('text/html;s=*');
+    var p = MediaType.specificityCmp(a, b);
+    p.should.eql(0);
+  });
+
+  it('should evaluate wildcard params as less specific than set param', function test() {
+    var a = new MediaType('text/html;p=*');
+    var b = new MediaType('text/html;p=1');
+    var p = MediaType.specificityCmp(a, b);
+    p.should.eql(1);
+  });
+
+  it('should evaluate wildcard in substring of param as less specific than earlier wildcard', function test() {
+    var a = new MediaType('text/html;p=1.*');
+    var b = new MediaType('text/html;p=1.2.*');
+    var p = MediaType.specificityCmp(a, b);
+    p.should.eql(1);
   });
 });
 

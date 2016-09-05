@@ -364,6 +364,29 @@ MediaType.specificityCmp = function specificityCmp(aArg, bArg) {
   if (a.params < b.params) {
     return -1;
   }
+  var n,
+      r;
+  var moreSpecificAParam = false;
+  var moreSpecificBParam = false;
+  if (a.params >= 0) {
+    for (n in aArg.params) {
+      if (bArg.params.hasOwnProperty(n)) {
+        r = paramCmp(aArg.params[n], bArg.params[n]);
+        if (r === -1) {
+          moreSpecificAParam = true;
+        }
+        if (r === 1) {
+          moreSpecificBParam = true;
+        }
+      }
+    }
+  }
+  if (moreSpecificAParam && !moreSpecificBParam) {
+    return -1;
+  }
+  if (!moreSpecificAParam && moreSpecificBParam) {
+    return 1;
+  }
   return 0;
 };
 
@@ -441,8 +464,11 @@ MediaType.mediaCmp = function mediaCmp(a, b) {
  */
 function paramsCmp(a, b) {
   var missingAParam = false;
+  var aParamIsSubset = false;
   var missingBParam = false;
-  var n;
+  var bParamIsSubset = false;
+  var n,
+      r;
 
   // Check if all params in `a` exist in `b`
   for (n in a) {
@@ -450,9 +476,16 @@ function paramsCmp(a, b) {
       missingBParam = true;
       continue;
     }
+    r = paramCmp(a[n], b[n]);
     // If param exists in both but mismatched values, disjoint
-    if (a[n] !== b[n]) {
+    if (r === null) {
       return null;
+    }
+    if (r === 1) {
+      bParamIsSubset = true;
+    }
+    if (r === -1) {
+      aParamIsSubset = true;
     }
   }
   // Check if all params in `b` exist in `a`
@@ -460,10 +493,6 @@ function paramsCmp(a, b) {
     if (!a.hasOwnProperty(n)) {
       missingAParam = true;
       continue;
-    }
-    // If param exists in both but mismatched values, disjoint
-    if (a[n] !== b[n]) {
-      return null;
     }
   }
   // If a is missing params from b and vice versa, disjoint
@@ -477,5 +506,77 @@ function paramsCmp(a, b) {
   if (missingBParam) {
     return -1;
   }
+  if (aParamIsSubset && !bParamIsSubset) {
+    return -1;
+  }
+  if (!aParamIsSubset && bParamIsSubset) {
+    return 1;
+  }
   return 0;
+}
+
+/*
+ * Determine if a param is a subset of another, including wildcards
+ *
+ * If a is a superset of b (b is smaller than a), return 1, e.g. a has wildcard
+ * If b is a superset of a, return -1
+ * If they are the exact same, return 0
+ * If they are disjoint, return null
+ *
+ * @param {string} a
+ * @param {string} b
+ *
+ * @returns {int|null}
+ */
+function paramCmp(a, b) {
+  var i = a.indexOf('*');
+  var j = b.indexOf('*');
+
+  if (i === j) {
+    // Wildcards (if any) in same location
+    if (i === -1) {
+      // No wildcards
+      if (a !== b) {
+        return null;
+      }
+      return 0;
+    }
+    if (a.substring(0, i) !== b.substring(0, i)) {
+      // Different before wildcards, disjoint
+      return null;
+    }
+    return 0;
+  }
+  if (j >= 0 && i >= 0) {
+    // a and b have wildcards
+    if (i > j) {
+      // b has wildcard sooner, less specific
+      if (a.substring(0, j) !== b.substring(0, j)) {
+        return null;
+      }
+      return -1;
+    } else if (i < j) {
+      // a has wildcard sooner
+      if (a.substring(0, i) !== b.substring(0, i)) {
+        return null;
+      }
+      return 1;
+    }
+  }
+  // Single param has wildcard
+  if (i === -1) {
+    // b has wildcard at j
+    if (a.substring(0, j) !== b.substring(0, j)) {
+      return null;
+    }
+    return -1;
+  }
+  if (j === -1) {
+    // a has wildcard at i
+    if (a.substring(0, i) !== b.substring(0, i)) {
+      return null;
+    }
+    return 1;
+  }
+  throw new Error("unhandled parameter comparison case");
 }

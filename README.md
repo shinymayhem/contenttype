@@ -146,6 +146,7 @@ Example
 mediaCmp(parseMedia('text/html'), parseMedia('text/html')) === 0
 mediaCmp(parseMedia('*/*'), parseMedia('text/html')) === 1
 mediaCmp(parseMedia('text/html;level=1'), parseMedia('text/html')) === -1
+mediaCmp(parseMedia('text/html;level=1.2.*'), parseMedia('text/html;level=1.2.3')) === 1
 mediaCmp(parseMedia('application/json;profile="v1.json"'), parseMedia('application/json;profile="v2.json"')) === null
 ```
 
