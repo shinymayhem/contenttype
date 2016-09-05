@@ -1,6 +1,6 @@
 {
   "name": "@shinymayhem/contenttype",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Javascript/ECMAScript library for parsing Content-Type and Media/MIME type strings",
   "main": "contenttype.js",
   "scripts": {

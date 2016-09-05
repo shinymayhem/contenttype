@@ -292,6 +292,11 @@ MediaType.select = function select(representations, accepts) {
       }
       is = MediaType.mediaCmp(available, accept);
       if (is !== null && is <= 0) {
+        // This 'accept' entry is the same as, or a superset of, the available type
+        // e.g. accept=text/html, available=text/html
+        // e.g. accept=text/html, available=text/html;level=3
+        // e.g. accept=text/html;level=3.1, available=text/html;level=3.*
+        // e.g. accept=*/*, available=text/html
         typeQ = Math.max(Math.min(1, available.q || 1), 0);
         acceptQ = Math.max(Math.min(1, accept.q || 1), 0);
         available.taken = true;
@@ -304,6 +309,10 @@ MediaType.select = function select(representations, accepts) {
             q: acceptQ * typeQ
           };
         }
+      } else if (is !== null) {
+        // This 'accept' entry is a subset of the available type
+        // e.g. accept=text/html, available=text/*
+        // e.g. accept=text/html;level=3, available=text/html
       }
     });
   });
@@ -507,10 +516,10 @@ function paramsCmp(a, b) {
     return -1;
   }
   if (aParamIsSubset && !bParamIsSubset) {
-    return -1;
+    return 0;
   }
   if (!aParamIsSubset && bParamIsSubset) {
-    return 1;
+    return 0;
   }
   return 0;
 }

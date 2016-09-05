@@ -74,11 +74,11 @@ describe('comparison', function tests() {
     expect(r).to.equal(null);
   });
 
-  it('should recognize wildcard parameter as subset of value where param is set', function test() {
+  it('should recognize wildcard parameter as equal to value where param is set', function test() {
     var p = new MediaType('text/plain;s=*');
     var q = new MediaType('text/plain;s=1');
     var r = MediaType.mediaCmp(p, q);
-    expect(r).to.equal(1);
+    expect(r).to.equal(0);
   });
 
   it('should recognize wildcard in different parameters as equal', function test() {
@@ -92,7 +92,7 @@ describe('comparison', function tests() {
     var p = new MediaType('text/plain;s=1.*');
     var q = new MediaType('text/plain;s=1.2');
     var r = MediaType.mediaCmp(p, q);
-    expect(r).to.equal(1);
+    expect(r).to.equal(0);
   });
 
   it('should recognize wildcard in substring as equal when other params are more specific', function test() {
@@ -113,7 +113,7 @@ describe('comparison', function tests() {
     var p = new MediaType('text/plain;s=1.*');
     var q = new MediaType('text/plain;s=1.2.*');
     var r = MediaType.mediaCmp(p, q);
-    expect(r).to.equal(1);
+    expect(r).to.equal(0);
   });
 });
 
@@ -333,6 +333,62 @@ describe('negotiation', function tests() {
       accept
     )).toString();
     selected.should.equal('text/html; level=1; other=4');
+  });
+
+  /*
+   * Allow wildcard in representations param
+   */
+  it('should select media type where available representation has a wildcard', function test() {
+    var representations = [
+      'text/html;level=1.2.*'
+    ];
+    var accept = 'text/html, text/html;level=1.2.3';
+    var selected = (MediaType.select(
+      representations,
+      accept
+    )).toString();
+    selected.should.equal('text/html; level=1.2.*');
+  });
+
+  /*
+   * Allow wildcard in representations param to respond with requested accept
+   */
+  it('should select media type where accept has a wildcard', function test() {
+    var representations = [
+      'text/html;level=1.2.3'
+    ];
+    var accept = 'text/html, text/html;level=1.2.*';
+    var selected = (MediaType.select(
+      representations,
+      accept
+    )).toString();
+    selected.should.equal('text/html; level=1.2.3');
+  });
+
+  it('should select media type where accept and available representation have wildcards', function test() {
+    var representations = [
+      'text/html;level=1.2.*'
+    ];
+    var accept = 'text/html, text/html;level=1.2.*';
+    var selected = (MediaType.select(
+      representations,
+      accept
+    )).toString();
+    selected.should.equal('text/html; level=1.2.*');
+  });
+
+  it('should select media type where an available representation has a wildcard but more specific representation available', function test() {
+    var representations = [
+      'text/html',
+      'text/html;level=1.2.*',
+      'text/html;level=1.2.3;other=3'
+    ];
+    var accept = 'text/html, text/html;level=1.2.3';
+    var selected = (MediaType.select(
+      representations,
+      accept
+    )).toString();
+    selected.should.equal('text/html; level=1.2.3; other=3');
   });
 
   it('should select preferred type based on matching parameters', function test() {
